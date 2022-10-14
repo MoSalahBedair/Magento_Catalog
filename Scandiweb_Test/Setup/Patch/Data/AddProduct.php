@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Magento\DummyModule\Setup\Patch\Data;
+namespace Scandiweb\Test\Setup\Patch\Data;
 
-use Magento\Framework\Setup\Patch\PatchRevertableInterface;
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
@@ -22,20 +21,70 @@ use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 
-
-class CreateSimpleProduct implements DataPatchInterface, PatchRevertableInterface
+class CreateSimpleProduct implements DataPatchInterface
 {
+  /**
+   * @var ModuleDataSetupInterface
+   */
   protected ModuleDataSetupInterface $setup;
+
+  /**
+   * @var ProductInterfaceFactory
+   */
   protected ProductInterfaceFactory $productInterfaceFactory;
+
+  /**
+   * @var ProductRepositoryInterface
+   */
   protected ProductRepositoryInterface $productRepository;
+
+  /**
+   * @var State
+   */
   protected State $appState;
+
+  /**
+   * @var EavSetup
+   */
   protected EavSetup $eavSetup;
+
+  /**
+   * @var StoreManagerInterface
+   */
   protected StoreManagerInterface $storeManager;
+
+  /**
+   * @var SourceItemInterfaceFactory
+   */
   protected SourceItemInterfaceFactory $sourceItemFactory;
+
+  /**
+   * @var SourceItemsSaveInterface
+   */
   protected SourceItemsSaveInterface $sourceItemsSaveInterface;
+
+  /**
+   * @var CategoryLinkManagementInterface
+   */
   protected CategoryLinkManagementInterface $categoryLink;
+
+  /**
+   * @var array
+   */
   protected array $sourceItems = [];
 
+  /**
+   * @param ModuleDataSetupInterface $setup
+   * @param ProductInterfaceFactory $productInterfaceFactory
+   * @param ProductRepositoryInterface $productRepository
+   * @param State $appState
+   * @param StoreManagerInterface $storeManager
+   * @param EavSetup $eavSetup
+   * @param SourceItemInterfaceFactory $sourceItemFactory
+   * @param SourceItemsSaveInterface $sourceItemsSaveInterface
+   * @param CategoryLinkManagementInterface $categoryLink
+   * @param CategoryCollectionFactory $categoryCollectionFactory
+   */
   public function __construct(
     ModuleDataSetupInterface $setup,
     ProductInterfaceFactory $productInterfaceFactory,
@@ -61,20 +110,32 @@ class CreateSimpleProduct implements DataPatchInterface, PatchRevertableInterfac
   }
 
   /**
-   * {@inheritdoc}
+   * @return void
    */
-  public function apply()
+  public function apply(): void
   {
     $this->appState->emulateAreaCode('adminhtml', [$this, 'execute']);
   }
 
   /**
-   * {@inheritdoc}
+   * @return void
    */
-  public function execute()
+  public function execute(): void
   {
     // create the product
     $product = $this->productInterfaceFactory->create();
+
+		// get the attribute set id from EavSetup object
+    $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
+
+		// set attributes
+		$product->setTypeId(Type::TYPE_SIMPLE)
+        ->setAttributeSetId($attributeSetId)
+        ->setName('Grip Trainer')
+        ->setSku('grip-trainer')
+        ->setPrice(9.99)
+        ->setVisibility(Visibility::VISIBILITY_BOTH)
+        ->setStatus(Status::STATUS_ENABLED);
 
     $product = $this->productRepository->save($product);
 
@@ -86,22 +147,19 @@ class CreateSimpleProduct implements DataPatchInterface, PatchRevertableInterfac
   }
 
   /**
-   * {@inheritdoc}
+   * @return array
    */
-  public static function getDependencies()
+  public static function getDependencies(): array
   {
     return [];
-  }
-
-  public function revert()
-  {
   }
 
   /**
-   * {@inheritdoc}
+   * @return array
    */
-  public function getAliases()
+  public function getAliases(): array
   {
     return [];
   }
+
 }
